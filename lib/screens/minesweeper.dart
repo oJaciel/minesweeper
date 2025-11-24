@@ -14,12 +14,12 @@ class Minesweeper extends StatefulWidget {
 
 class _MinesweeperState extends State<Minesweeper> {
   bool? _winned;
-  Board _board = Board(lines: 12, columns: 12, bombQuantity: 3);
+  Board? _board;
 
   _restart() {
     setState(() {
       _winned = null;
-      _board.restart();
+      _board!.restart();
     });
   }
 
@@ -30,12 +30,12 @@ class _MinesweeperState extends State<Minesweeper> {
     setState(() {
       try {
         field.open();
-        if (_board.resolved) {
+        if (_board!.resolved) {
           _winned = true;
         }
       } on ExplosionException {
         _winned = false;
-        _board.revealBombs();
+        _board!.revealBombs();
       }
     });
   }
@@ -46,20 +46,43 @@ class _MinesweeperState extends State<Minesweeper> {
     }
     setState(() {
       field.toggleMark();
-      if (_board.resolved) {
+      if (_board!.resolved) {
         _winned = true;
       }
     });
+  }
+
+  Board getBoard(double width, double height) {
+    if (_board == null) {
+      int columnQuantity = 15;
+      double fieldSize = width / columnQuantity;
+
+      int lineQuantity = (height / fieldSize).floor();
+
+      _board = Board(
+        lines: lineQuantity,
+        columns: columnQuantity,
+        bombQuantity: (lineQuantity / 2).round(),
+      );
+    }
+    return _board!;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ResultWidget(winned: _winned, onRestart: _restart),
-      body: BoardWidget(
-        board: _board,
-        onOpen: _open,
-        onToggleMark: _toggleMark,
+      body: Container(
+        color: Colors.grey,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return BoardWidget(
+              board: getBoard(constraints.maxWidth, constraints.maxHeight),
+              onOpen: _open,
+              onToggleMark: _toggleMark,
+            );
+          },
+        ),
       ),
     );
   }
